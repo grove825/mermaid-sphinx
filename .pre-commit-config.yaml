@@ -1,3 +1,5 @@
+exclude : ^tests/roots
+
 repos:
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v5.0.0
@@ -17,9 +19,6 @@ repos:
       - id: debug-statements
       - id: forbid-submodules
       - id: requirements-txt-fixer
-      - id: name-tests-test
-        args:
-          - --pytest-test-first
       - id: pretty-format-json
         args:
           - --autofix
@@ -29,26 +28,27 @@ repos:
         args:
           - --fix=lf
     - repo: https://github.com/pre-commit/mirrors-mypy
-      rev: "v1.14.0"
+      rev: "v1.14.1"
       hooks:
         - id: mypy
+          additional_dependencies: ["types-docutils"]
     - repo: https://github.com/asottile/pyupgrade
       rev: "v3.19.1"
       hooks:
         - id: pyupgrade
           args: [--py311-plus]
     - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: "v0.8.4"
+      rev: "v0.9.4"
       hooks:
         - id: ruff
           args:
             - --fix
     - repo: https://github.com/psf/black-pre-commit-mirror
-      rev: "24.10.0"
+      rev: "25.1.0"
       hooks:
         - id: black
     - repo: https://github.com/codespell-project/codespell
-      rev: v2.3.0
+      rev: v2.4.1
       hooks:
         - id: codespell
           args:
