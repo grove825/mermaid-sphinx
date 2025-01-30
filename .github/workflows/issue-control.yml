@@ -1,0 +1,83 @@
+# This workflow creates a new branch when an issue is assigned or a comment is made with the /cib command.
+# It also closes the issue when a pull request is merged.
+# MIT License
+
+name: Issue Assignment
+
+env:
+  autoCloseIssue: true
+  gitSafeReplacementChar: '_'
+
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [assigned]
+  pull_request:
+    types: [closed]
+
+jobs:
+  create-branch:
+    permissions:
+      issues: write
+      contents: write
+    if: contains(github.event.comment.body, '/cib') || github.event.action == 'assigned'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set Branch Name
+        id: set-branch-name
+        env:
+          TITLE: ${{ github.event.issue.title }}
+        run: |
+          branch_name=$(echo "issue-${{ github.event.issue.number }} $TITLE" | tr '[:upper:]' '[:lower:]' | tr ' ' '${{ env.gitSafeReplacementChar }}' | sed 's/[^a-zA-Z0-9-]/${{ env.gitSafeReplacementChar }}/g')
+          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
+      - name: Fetch Development Branch
+        run: |
+          git fetch origin ${{ github.event.repository.default_branch }}
+      - name: Checkout Branch
+        run: |
+          git checkout ${{ github.event.repository.default_branch }}
+      - name: Create Branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ steps.set-branch-name.outputs.branch_name }}
+        run: |
+          git checkout -b $BRANCH_NAME
+          git push --set-upstream origin $BRANCH_NAME
+      - name: Add Comment to Issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ steps.set-branch-name.outputs.branch_name }}
+        run: |
+          issue_number=${{ github.event.issue.number }}
+          branch_name=$BRANCH_NAME
+          repo_url=https://api.github.com/repos/${{ github.repository }}
+          branch_url=https://github.com/${{ github.repository }}/tree/$branch_name
+          curl -X POST -H "Authorization: Bearer $GITHUB_TOKEN" \
+               -H "Accept: application/vnd.github.v3+json" \
+               $repo_url/issues/$issue_number/comments \
+               -d '{"body": "Branch created: ['$branch_name']('$branch_url')"}'
+  close-issue:
+    permissions:
+      issues: write
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close Issue
+        if: ${{ env.autoCloseIssue == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event.pull_request.merged }}" = "true" ]; then
+            issue_number=$(echo "${{ github.event.pull_request.head.ref }}" | grep -oP '(?<=issue-)\d+')
+            if [ -n "$issue_number" ]; then
+              curl -X PATCH -H "Authorization: Bearer $GITHUB_TOKEN" \
+                   -H "Accept: application/vnd.github.v3+json" \
+                   https://api.github.com/repos/${{ github.repository }}/issues/$issue_number \
+                   -d '{"state": "closed"}'
+            else
+              echo "No issue number found in the branch name."
+            fi
+          fi
