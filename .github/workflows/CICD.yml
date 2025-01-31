@@ -39,7 +39,7 @@ jobs:
           . venv/bin/activate
           python --version
           pip install uv
-          uv pip install .[all]
+          uv pip install .[dev,docs]
       - name: Cache pre-commit environment
         id: cache-precommit
         uses: actions/cache@v4.2.0
