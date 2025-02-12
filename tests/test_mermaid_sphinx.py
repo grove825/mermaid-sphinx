@@ -56,6 +56,12 @@ def test_html__file_icon_font_awesome__link_available(index):
     assert "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" in index
 
 
+@pytest.mark.sphinx("html", testroot="file_icon_mdi")
+def test_html__file_icon_material_design__link_available(index):
+    assert "mermaid.run()" in index
+    assert "https://cdn.materialdesignicons.com/6.5.95/css/materialdesignicons.min.css" in index
+
+
 @pytest.mark.sphinx("html", testroot="file_icon_unknown")
 def test_html__file_icon_unknown__link_not_available(index):
     assert "mermaid.run()" in index
