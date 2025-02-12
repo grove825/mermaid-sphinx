@@ -45,10 +45,8 @@ docs = [
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["mermaid_sphinx"]
+exclude = ["tests", "testing", "docs"]
 
-
-[project.scripts]
-firewall_block = "mermaid_sphinx.main:main"
 
 [tool.coverage.run]
 branch = true
