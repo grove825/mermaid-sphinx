@@ -23,6 +23,8 @@ def visit_mermaid_node(self: sphinx.writers.html5.HTML5Translator, node: Mermaid
                 icon_text = line.split("(", 1)[1].split(")", 1)[0].strip()
                 if icon_text.startswith("fa"):
                     self.builder.config.mermaid_sphinx_config["font_awesome"] = True
+                if icon_text.startswith("mdi"):
+                    self.builder.config.mermaid_sphinx_config["material_design"] = True
     tag_template = f"""<pre class="mermaid">
         {encode}
     </pre>"""
@@ -90,6 +92,8 @@ def install_js(
     """
     if app.config.mermaid_sphinx_config["font_awesome"]:
         app.add_css_file("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css")
+    if app.config.mermaid_sphinx_config["material_design"]:
+        app.add_css_file("https://cdn.materialdesignicons.com/6.5.95/css/materialdesignicons.min.css")
 
     app.add_js_file(mermaid_js_url, type="module")
 
@@ -109,7 +113,7 @@ def setup(app: Sphinx) -> dict[str, str | bool]:
     """
     app.add_node(Mermaid, html=(visit_mermaid_node, depart_mermaid_node))
     app.add_directive("mermaid", MermaidDirective)
-    app.add_config_value("mermaid_sphinx_config", {"font_awesome": False}, "env")
+    app.add_config_value("mermaid_sphinx_config", {"font_awesome": False, "material_design": False}, "env")
 
     app.connect("html-page-context", install_js)
 
