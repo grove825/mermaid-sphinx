@@ -16,15 +16,22 @@ class Mermaid(nodes.General, nodes.Element):
 
 def visit_mermaid_node(self: sphinx.writers.html5.HTML5Translator, node: Mermaid) -> None:
     """Visit the node."""
+    encode = self.encode(node["code"])
+    if "::icon" in encode:
+        for line in encode.split("\n"):
+            if "::icon" in line:
+                icon_text = line.split("(", 1)[1].split(")", 1)[0].strip()
+                if icon_text.startswith("fa"):
+                    self.builder.config.mermaid_sphinx_config["font_awesome"] = True
     tag_template = f"""<pre class="mermaid">
-        {self.encode(node["code"])}
+        {encode}
     </pre>"""
     self.body.append(tag_template)
 
 
 def depart_mermaid_node(_self: sphinx.writers.html5.HTML5Translator, _node: Mermaid) -> None:
     """
-    Depart the node.
+    Leave the node.
 
     This function can be empty if no specific action is needed on departure
     """
@@ -81,6 +88,8 @@ def install_js(
     import mermaid from "{mermaid_js_url}";
     window.addEventListener("load", () => mermaid.run());
     """
+    if app.config.mermaid_sphinx_config["font_awesome"]:
+        app.add_css_file("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css")
 
     app.add_js_file(mermaid_js_url, type="module")
 
@@ -100,7 +109,7 @@ def setup(app: Sphinx) -> dict[str, str | bool]:
     """
     app.add_node(Mermaid, html=(visit_mermaid_node, depart_mermaid_node))
     app.add_directive("mermaid", MermaidDirective)
-    app.add_config_value("mermaid_sphinx_config", {}, "env")
+    app.add_config_value("mermaid_sphinx_config", {"font_awesome": False}, "env")
 
     app.connect("html-page-context", install_js)
 
